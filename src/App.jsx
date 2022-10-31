@@ -1,242 +1,117 @@
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import Add from "@mui/icons-material/Add";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
-import CardContent from "@mui/material/CardContent";
-import Container from "@mui/material/Container";
-import ExpandMore from "@mui/icons-material/ExpandMore";
-import Fab from "@mui/material/Fab";
-import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
-
-const styles = {
-  fab: {
-    position: "fixed",
-    bottom: "3rem",
-    right: "3rem",
-  },
-  card: {
-    margin: "1rem",
-    width: "16rem",
-  },
-  cardContent: {
-    minHeight: "8rem",
-  },
-  cardActions: {
-    height: "3rem",
-  },
-  iconButton: {
-    marginLeft: "auto",
-    width: "3rem",
-    height: "3rem",
-    borderRadius: "50%",
-  },
-  expandMore: {
-    position: "absolute",
-    left: "0",
-    top: "0",
-    width: "100%",
-    height: "100%",
-    padding: "0.5rem",
-  },
-  select: {
-    width: "100%",
-    height: "100%",
-    opacity: "0",
-    cursor: "pointer",
-  },
-};
+import { Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import Home from "./pages/Home";
+import Search from "./pages/Search";
+import NotFound from "./pages/NotFound";
+import * as API from "./api";
 
 function App() {
+  const [coursecards, setCourseCards] = useState([]);
+  const [result, setResult] = useState([]);
+  const [query, setQuery] = useState("");
+  const [pagecount, setPageCount] = useState(0);
+  const [pagenumber, setPageNumber] = useState(1);
+
+  useEffect(() => {
+    API.getAll()
+      .then((coursecards) => setCourseCards(coursecards))
+      .then(compareArray(coursecards, result))
+      .catch((err) => console.log(err));
+  }, [coursecards]);
+
+  useEffect(() => {
+    API.search(query, pagenumber, 9)
+      .then((result) => {
+        setResult(assignId(result.data));
+        setPageCount(result.pagination.last);
+      })
+      .then(compareArray(coursecards, result))
+      .catch((err) => console.log(err));
+  }, [query, pagenumber]);
+
+  const update = (coursecard, status) => {
+    API.update(coursecard, status).then(compareArray(coursecards, result));
+  };
+
+  async function create(coursecard, status) {
+    let course = await API.create(coursecard);
+    await API.update(course, status);
+    await compareArray(coursecards, result);
+  }
+
+  async function remove(id, coursecard) {
+    for (var item of coursecards) {
+      if (item._id === id) {
+        await API.remove(item);
+      }
+    }
+    await compareArray(coursecards, result);
+    delete coursecard.status;
+    delete coursecard._id;
+  }
+
+  function assignId(array) {
+    array.forEach((item, i) => {
+      item._id = i + 1;
+    });
+    return array;
+  }
+
+  async function compareArray(coursecards, result) {
+    if (coursecards.length >= result.length) {
+      coursecards.forEach((coursecardsItem) => {
+        result.forEach((resultItem) => {
+          if (
+            coursecardsItem.title === resultItem.title &&
+            coursecardsItem.number === resultItem.number &&
+            coursecardsItem.term === resultItem.term
+          ) {
+            resultItem._id = coursecardsItem._id;
+            resultItem.status = coursecardsItem.status;
+          }
+        });
+      });
+    } else {
+      result.forEach((resultItem) => {
+        coursecards.forEach((coursecardsItem) => {
+          if (
+            coursecardsItem.title === resultItem.title &&
+            coursecardsItem.number === resultItem.number &&
+            coursecardsItem.term === resultItem.term
+          ) {
+            resultItem._id = coursecardsItem._id;
+            resultItem.status = coursecardsItem.status;
+          }
+        });
+      });
+    }
+  }
+
   return (
-    <Container>
-      <AppBar position="sticky">
-        <Toolbar>
-          <Box py={3}>
-            <Typography variant="h4">Course Planner</Typography>
-          </Box>
-        </Toolbar>
-      </AppBar>
-      <Accordion defaultExpanded={true}>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          <Box py={2}>
-            <Typography variant="h6">Currently Enrolled</Typography>
-          </Box>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid
-            container
-            direction="row"
-            justifyContent="center"
-            alignItems="center"
-          >
-            <Grid item>
-              <Card style={styles.card}>
-                <Box bgcolor={"info.main"}>
-                  <CardContent style={styles.cardContent}>
-                    <Typography color="textSecondary" gutterBottom>
-                      601.280
-                    </Typography>
-                    <Typography variant="h5">Full-Stack JavaScript</Typography>
-                  </CardContent>
-                </Box>
-                <CardActions style={styles.cardActions}>
-                  <Button disabled>Fall 2022</Button>
-                  <IconButton style={styles.iconButton}>
-                    <ExpandMore style={styles.expandMore} />
-                    <Select style={styles.select} value={"enrolled"}>
-                      <MenuItem value="move" disabled>
-                        <Typography variant="body1">Move to...</Typography>
-                      </MenuItem>
-                      <MenuItem value="enrolled">
-                        <Typography variant="body1">
-                          Currently Enrolled
-                        </Typography>
-                      </MenuItem>
-                      <MenuItem value="interested">
-                        <Typography variant="body1">Want to Take</Typography>
-                      </MenuItem>
-                      <MenuItem value="taken">
-                        <Typography variant="body1">Already Took</Typography>
-                      </MenuItem>
-                      <MenuItem value="none">
-                        <Box fontStyle="italic">
-                          <Typography variant="body1">None</Typography>
-                        </Box>
-                      </MenuItem>
-                    </Select>
-                  </IconButton>
-                </CardActions>
-              </Card>
-            </Grid>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
-      <Accordion defaultExpanded={true}>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          <Box py={2}>
-            <Typography variant="h6">Want to Take</Typography>
-          </Box>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid
-            container
-            direction="row"
-            justifyContent="center"
-            alignItems="center"
-          >
-            <Grid item>
-              <Card style={styles.card}>
-                <Box bgcolor={"warning.main"}>
-                  <CardContent style={styles.cardContent}>
-                    <Typography color="textSecondary" gutterBottom>
-                      601.421
-                    </Typography>
-                    <Typography variant="h5">
-                      Object-Oriented Software Engineering
-                    </Typography>
-                  </CardContent>
-                </Box>
-                <CardActions style={styles.cardActions}>
-                  <Button disabled>Spring 2023</Button>
-                  <IconButton style={styles.iconButton}>
-                    <ExpandMore style={styles.expandMore} />
-                    <Select style={styles.select} value={"interested"}>
-                      <MenuItem value="move" disabled>
-                        <Typography variant="body1">Move to...</Typography>
-                      </MenuItem>
-                      <MenuItem value="enrolled">
-                        <Typography variant="body1">
-                          Currently Enrolled
-                        </Typography>
-                      </MenuItem>
-                      <MenuItem value="interested">
-                        <Typography variant="body1">Want to Take</Typography>
-                      </MenuItem>
-                      <MenuItem value="taken">
-                        <Typography variant="body1">Already Took</Typography>
-                      </MenuItem>
-                      <MenuItem value="none">
-                        <Box fontStyle="italic">
-                          <Typography variant="body1">None</Typography>
-                        </Box>
-                      </MenuItem>
-                    </Select>
-                  </IconButton>
-                </CardActions>
-              </Card>
-            </Grid>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
-      <Accordion defaultExpanded={true}>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          <Box py={2}>
-            <Typography variant="h6">Already Took</Typography>
-          </Box>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid
-            container
-            direction="row"
-            justifyContent="center"
-            alignItems="center"
-          >
-            <Grid item>
-              <Card style={styles.card}>
-                <Box bgcolor={"success.main"}>
-                  <CardContent style={styles.cardContent}>
-                    <Typography color="textSecondary" gutterBottom>
-                      601.226
-                    </Typography>
-                    <Typography variant="h5">Data Structures</Typography>
-                  </CardContent>
-                </Box>
-                <CardActions style={styles.cardActions}>
-                  <Button disabled>Spring 2022</Button>
-                  <IconButton style={styles.iconButton}>
-                    <ExpandMore style={styles.expandMore} />
-                    <Select style={styles.select} value={"taken"}>
-                      <MenuItem value="move" disabled>
-                        <Typography variant="body1">Move to...</Typography>
-                      </MenuItem>
-                      <MenuItem value="enrolled">
-                        <Typography variant="body1">
-                          Currently Enrolled
-                        </Typography>
-                      </MenuItem>
-                      <MenuItem value="interested">
-                        <Typography variant="body1">Want to Take</Typography>
-                      </MenuItem>
-                      <MenuItem value="taken">
-                        <Typography variant="body1">Already Took</Typography>
-                      </MenuItem>
-                      <MenuItem value="none">
-                        <Box fontStyle="italic">
-                          <Typography variant="body1">None</Typography>
-                        </Box>
-                      </MenuItem>
-                    </Select>
-                  </IconButton>
-                </CardActions>
-              </Card>
-            </Grid>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
-      <Fab style={styles.fab} color="primary">
-        <Add />
-      </Fab>
-    </Container>
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <Home coursecards={coursecards} remove={remove} update={update} />
+        }
+      />
+      <Route
+        path="/search"
+        element={
+          <Search
+            query={query}
+            setQuery={setQuery}
+            result={result}
+            pagecount={pagecount}
+            setPageNumber={setPageNumber}
+            update={update}
+            remove={remove}
+            create={create}
+          />
+        }
+      />
+      <Route path="/*" element={<NotFound />} />
+    </Routes>
   );
 }
 
