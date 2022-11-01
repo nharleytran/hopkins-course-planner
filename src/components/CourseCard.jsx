@@ -108,7 +108,7 @@ function CourseCard(props) {
   return (
     <>
       <Grid item justifyContent="center">
-        <Card style={styles.card} justifySelf="center">
+        <Card style={styles.card}>
           <Box bgcolor={color}>
             <CardContent style={styles.cardContent}>
               <Typography color="textSecondary" gutterBottom>
