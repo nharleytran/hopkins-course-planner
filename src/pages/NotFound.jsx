@@ -23,7 +23,7 @@ function NotFound() {
         <Typography variant="h6" style={{ color: "black" }}>
           The page you’re looking for doesn’t exist.
         </Typography>
-        <Link to={"hw5-course-planner-starter/"}>
+        <Link to={"/"}>
           <Button variant="contained">Back Home</Button>
         </Link>
       </Box>

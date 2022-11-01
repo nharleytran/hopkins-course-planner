@@ -13,7 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <>
     <CssBaseline />
     <ThemeProvider theme={theme}>
-      <BrowserRouter>
+      <BrowserRouter basename="/homework-5-nharleytran/">
         <App />
       </BrowserRouter>
     </ThemeProvider>
