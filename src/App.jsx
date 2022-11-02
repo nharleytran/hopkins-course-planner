@@ -39,9 +39,13 @@ function App() {
     await compareArray(coursecards, result);
   }
 
-  async function remove(id, coursecard) {
+  async function remove(coursecard) {
     for (var item of coursecards) {
-      if (item._id === id) {
+      if (
+      item.title === coursecard.title &&
+      item.number === coursecard.number &&
+      item.term === coursecard.term
+      ) {
         await API.remove(item);
       }
     }

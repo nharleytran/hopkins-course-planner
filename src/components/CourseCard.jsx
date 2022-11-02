@@ -78,7 +78,7 @@ function CourseCard(props) {
   }, [status, id]);
 
   const handleOnRemove = () => {
-    remove(id, coursecard);
+    remove(coursecard);
   };
 
   const handleOnUpdateTaken = () => {
